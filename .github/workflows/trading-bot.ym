@@ -1,0 +1,75 @@
+name: Kraken Trading Bot
+
+on:
+  # Ejecutar cada hora
+  schedule:
+    - cron: '0 * * * *'
+  
+  # Manual
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Simulación (true) o Real (false)'
+        required: false
+        default: 'true'
+
+jobs:
+  trade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: 📦 Instalar dependencias
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: 🚀 Ejecutar bot
+      env:
+        # Kraken (configurar en Settings > Secrets)
+        KRAKEN_API_KEY: ${{ secrets.KRAKEN_API_KEY }}
+        KRAKEN_API_SECRET: ${{ secrets.KRAKEN_API_SECRET }}
+        
+        # Telegram (configurar en Settings > Secrets)
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        
+        # Trading
+        TRADING_SYMBOL: 'ADA-USD'  # yfinance symbol
+        KRAKEN_PAIR: 'ADAEUR'      # Kraken pair
+        POSITION_SIZE_PCT: '0.30'  # 30% del capital
+        LEVERAGE: '3'              # 3x leverage
+        MIN_BALANCE: '10.0'        # Balance mínimo
+        
+        # Risk Management
+        USE_STOP_LOSS: 'true'
+        STOP_LOSS_PCT: '4.0'
+        USE_TAKE_PROFIT: 'true'
+        TAKE_PROFIT_PCT: '8.0'
+        USE_TRAILING_STOP: 'true'
+        TRAILING_STOP_PCT: '2.5'
+        MIN_PROFIT_FOR_TRAILING: '3.0'
+        
+        # Strategy
+        LOOKBACK_PERIOD: '90d'     # 90 días de historia
+        CANDLE_INTERVAL: '1h'      # Velas de 1 hora
+        USE_VOLUME_FILTER: 'true'
+        
+        # Mode
+        DRY_RUN: ${{ github.event.inputs.dry_run || 'true' }}
+      
+      run: python kraken_yfinance_bot.py
+    
+    - name: ✅ Completado
+      if: success()
+      run: echo "Bot ejecutado correctamente"
+    
+    - name: ❌ Error
+      if: failure()
+      run: echo "Error en la ejecución"
