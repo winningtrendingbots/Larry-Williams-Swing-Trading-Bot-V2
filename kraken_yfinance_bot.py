@@ -52,7 +52,7 @@ class Config:
     TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
     
     # Mode
-    DRY_RUN = os.getenv('DRY_RUN', 'true').lower() == 'true'
+    DRY_RUN = os.getenv('DRY_RUN', 'true').lower() == 'false'
 
 
 # ═══════════════════════════════════════════════════════════════════════════
